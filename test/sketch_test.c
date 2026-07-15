@@ -22,6 +22,14 @@ int main(void) {
     assert(sketch_canvas_pixel(canvas, 4, 4) == 0);
     assert(sketch_canvas_pixel(canvas, 1, 4) == UINT8_MAX);
 
+    sketch_canvas_clear(canvas, UINT8_MAX);
+    /* An off-canvas endpoint is clipped instead of making rasterisation unbounded. */
+    const uint8_t clipped[] = {0xff, 0x04, 0x80};
+    assert(sketch_decode_bytes(canvas, clipped, sizeof(clipped)) == SKETCH_OK);
+    for (size_t x = 0; x < 5; x++) {
+        assert(sketch_canvas_pixel(canvas, x, 0) == 0);
+    }
+
     assert(sketch_decode_bytes(canvas, (const uint8_t[]){0x3f}, 1) ==
            SKETCH_MALFORMED_STREAM);
     sketch_canvas_destroy(canvas);
