@@ -47,8 +47,8 @@ int main(void) {
     assert(strstr(trace_text, "NEXT_FRAME") != NULL);
     assert(fclose(trace) == 0);
 
-    assert(sketch_write_pgm_options(canvas, "sketch-test.pgm", SKETCH_PGM_PLAIN,
-                                    true, 2) == SKETCH_OK);
+    assert(sketch_write_pgm_options(canvas, "sketch-test.pgm", SKETCH_PGM_PLAIN, true,
+                                    2) == SKETCH_OK);
     FILE *pgm = fopen("sketch-test.pgm", "rb");
     assert(pgm != NULL);
     char pgm_header[32] = {0};
@@ -56,6 +56,16 @@ int main(void) {
     assert(strncmp(pgm_header, "P2\n10 10\n255\n", 13) == 0);
     assert(fclose(pgm) == 0);
     assert(remove("sketch-test.pgm") == 0);
+
+    assert(sketch_write_svg(canvas, "sketch-test.svg", true, 3) == SKETCH_OK);
+    FILE *svg = fopen("sketch-test.svg", "rb");
+    assert(svg != NULL);
+    char svg_header[128] = {0};
+    assert(fread(svg_header, 1, sizeof(svg_header) - 1, svg) > 0);
+    assert(strstr(svg_header, "<svg") != NULL);
+    assert(strstr(svg_header, "width=\"15\"") != NULL);
+    assert(fclose(svg) == 0);
+    assert(remove("sketch-test.svg") == 0);
     sketch_canvas_destroy(canvas);
     return 0;
 }

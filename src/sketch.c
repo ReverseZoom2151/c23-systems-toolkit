@@ -52,8 +52,7 @@ static bool checked_add(int value, int change, int *result) {
 }
 
 static void set_pixel(sketch_canvas *canvas, int x, int y, uint8_t colour) {
-    if (x < 0 || y < 0 || (size_t)x >= canvas->width ||
-        (size_t)y >= canvas->height) {
+    if (x < 0 || y < 0 || (size_t)x >= canvas->width || (size_t)y >= canvas->height) {
         return;
     }
     canvas->pixels[(size_t)y * canvas->width + (size_t)x] = colour;
@@ -74,8 +73,7 @@ static unsigned point_outcode(int x, int y, int right, int bottom) {
     return code;
 }
 
-static bool clip_line(const sketch_canvas *canvas, int *x0, int *y0, int *x1,
-                      int *y1) {
+static bool clip_line(const sketch_canvas *canvas, int *x0, int *y0, int *x1, int *y1) {
     int right = canvas->width - 1 > INT_MAX ? INT_MAX : (int)(canvas->width - 1);
     int bottom = canvas->height - 1 > INT_MAX ? INT_MAX : (int)(canvas->height - 1);
     unsigned out0 = point_outcode(*x0, *y0, right, bottom);
@@ -223,9 +221,9 @@ static sketch_status use_tool(decoder_state *state, uint64_t command) {
 }
 
 static const char *tool_command_name(uint64_t command) {
-    static const char *const names[] = {"NONE", "LINE", "BLOCK", "COLOUR",
-                                        "TARGET_X", "TARGET_Y", "SHOW", "PAUSE",
-                                        "NEXT_FRAME"};
+    static const char *const names[] = {"NONE",   "LINE",     "BLOCK",
+                                        "COLOUR", "TARGET_X", "TARGET_Y",
+                                        "SHOW",   "PAUSE",    "NEXT_FRAME"};
     return command < sizeof(names) / sizeof(names[0]) ? names[command] : "UNKNOWN";
 }
 
@@ -392,8 +390,7 @@ sketch_status sketch_write_ascii(const sketch_canvas *canvas, FILE *output) {
     return SKETCH_OK;
 }
 
-sketch_status sketch_write_pgm_options(const sketch_canvas *canvas,
-                                       const char *path,
+sketch_status sketch_write_pgm_options(const sketch_canvas *canvas, const char *path,
                                        sketch_pgm_format format, bool invert,
                                        size_t scale) {
     if (!valid_canvas(canvas) || path == NULL || scale == 0 ||
@@ -408,14 +405,12 @@ sketch_status sketch_write_pgm_options(const sketch_canvas *canvas,
     sketch_status status = SKETCH_OK;
     size_t output_width = canvas->width * scale;
     size_t output_height = canvas->height * scale;
-    if (fprintf(output, "%s\n%zu %zu\n255\n",
-                format == SKETCH_PGM_BINARY ? "P5" : "P2", output_width,
-                output_height) < 0) {
+    if (fprintf(output, "%s\n%zu %zu\n255\n", format == SKETCH_PGM_BINARY ? "P5" : "P2",
+                output_width, output_height) < 0) {
         status = SKETCH_IO_ERROR;
     }
     for (size_t y = 0; status == SKETCH_OK && y < canvas->height; y++) {
-        for (size_t repeat_y = 0; repeat_y < scale && status == SKETCH_OK;
-             repeat_y++) {
+        for (size_t repeat_y = 0; repeat_y < scale && status == SKETCH_OK; repeat_y++) {
             for (size_t x = 0; x < canvas->width && status == SKETCH_OK; x++) {
                 uint8_t pixel = canvas->pixels[y * canvas->width + x];
                 uint8_t value = invert ? (uint8_t)(UINT8_MAX - pixel) : pixel;
@@ -446,8 +441,58 @@ sketch_status sketch_write_pgm(const sketch_canvas *canvas, const char *path) {
     return sketch_write_pgm_options(canvas, path, SKETCH_PGM_BINARY, false, 1);
 }
 
-static sketch_status inspect_stream(FILE *output, const uint8_t *bytes,
-                                    size_t length) {
+sketch_status sketch_write_svg(const sketch_canvas *canvas, const char *path,
+                               bool invert, size_t scale) {
+    if (!valid_canvas(canvas) || path == NULL || scale == 0 ||
+        canvas->width > SIZE_MAX / scale || canvas->height > SIZE_MAX / scale) {
+        return SKETCH_INVALID_ARGUMENT;
+    }
+    FILE *output = fopen(path, "w");
+    if (output == NULL) {
+        return SKETCH_IO_ERROR;
+    }
+
+    size_t output_width = canvas->width * scale;
+    size_t output_height = canvas->height * scale;
+    uint8_t background = invert ? 0 : UINT8_MAX;
+    sketch_status status = SKETCH_OK;
+    if (fprintf(output,
+                "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"%zu\" "
+                "height=\"%zu\" viewBox=\"0 0 %zu %zu\" "
+                "shape-rendering=\"crispEdges\">\n"
+                "<rect width=\"%zu\" height=\"%zu\" fill=\"#%02X%02X%02X\"/>\n",
+                output_width, output_height, canvas->width, canvas->height,
+                canvas->width, canvas->height, background, background,
+                background) < 0) {
+        status = SKETCH_IO_ERROR;
+    }
+
+    for (size_t y = 0; status == SKETCH_OK && y < canvas->height; y++) {
+        for (size_t x = 0; x < canvas->width; x++) {
+            uint8_t pixel = canvas->pixels[y * canvas->width + x];
+            uint8_t value = invert ? (uint8_t)(UINT8_MAX - pixel) : pixel;
+            if (value == background) {
+                continue;
+            }
+            if (fprintf(output,
+                        "<rect x=\"%zu\" y=\"%zu\" width=\"1\" height=\"1\" "
+                        "fill=\"#%02X%02X%02X\"/>\n",
+                        x, y, value, value, value) < 0) {
+                status = SKETCH_IO_ERROR;
+                break;
+            }
+        }
+    }
+    if (status == SKETCH_OK && fputs("</svg>\n", output) == EOF) {
+        status = SKETCH_IO_ERROR;
+    }
+    if (fclose(output) != 0) {
+        status = SKETCH_IO_ERROR;
+    }
+    return status;
+}
+
+static sketch_status inspect_stream(FILE *output, const uint8_t *bytes, size_t length) {
     decoder_state state = {0};
     size_t frame = 0;
     state.tool = DRAW_LINE;
@@ -498,10 +543,9 @@ static sketch_status inspect_stream(FILE *output, const uint8_t *bytes,
             int old_y = state.y;
             state.x = state.target_x;
             state.y = state.target_y;
-            if (fprintf(output,
-                        "DY %+d -> %s (%d,%d) -> (%d,%d), colour=%u",
-                        signed_operand(byte), drawing_tool_name(state.tool), old_x, old_y,
-                        state.x, state.y, (unsigned)state.colour) < 0) {
+            if (fprintf(output, "DY %+d -> %s (%d,%d) -> (%d,%d), colour=%u",
+                        signed_operand(byte), drawing_tool_name(state.tool), old_x,
+                        old_y, state.x, state.y, (unsigned)state.colour) < 0) {
                 return SKETCH_IO_ERROR;
             }
             break;
@@ -511,14 +555,15 @@ static sketch_status inspect_stream(FILE *output, const uint8_t *bytes,
                 return SKETCH_OUT_OF_RANGE;
             }
             state.data = (state.data << OPERAND_BITS) | (byte & OPERAND_MASK);
-            if (fprintf(output, "DATA %-6u -> data=%ju", (unsigned)(byte & OPERAND_MASK),
-                        (uintmax_t)state.data) < 0) {
+            if (fprintf(output, "DATA %-6u -> data=%ju",
+                        (unsigned)(byte & OPERAND_MASK), (uintmax_t)state.data) < 0) {
                 return SKETCH_IO_ERROR;
             }
             break;
         }
-        if (fprintf(output, " | state cursor=(%d,%d) target=(%d,%d) tool=%s colour=%u "
-                            "frame=%zu\n",
+        if (fprintf(output,
+                    " | state cursor=(%d,%d) target=(%d,%d) tool=%s colour=%u "
+                    "frame=%zu\n",
                     state.x, state.y, state.target_x, state.target_y,
                     drawing_tool_name(state.tool), (unsigned)state.colour, frame) < 0) {
             return SKETCH_IO_ERROR;
@@ -527,8 +572,7 @@ static sketch_status inspect_stream(FILE *output, const uint8_t *bytes,
     return SKETCH_OK;
 }
 
-sketch_status sketch_inspect_bytes(FILE *output, const uint8_t *bytes,
-                                   size_t length) {
+sketch_status sketch_inspect_bytes(FILE *output, const uint8_t *bytes, size_t length) {
     if (output == NULL || (bytes == NULL && length != 0)) {
         return SKETCH_INVALID_ARGUMENT;
     }

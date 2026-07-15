@@ -55,6 +55,9 @@ target_link_libraries(sketch-pgm PRIVATE imperative_core)
 add_executable(sketch-inspect app/sketch_inspect_main.c)
 target_link_libraries(sketch-inspect PRIVATE imperative_core)
 
+add_executable(sketch-svg app/sketch_svg_main.c)
+target_link_libraries(sketch-svg PRIVATE imperative_core)
+
 add_executable(sketch-tests test/sketch_test.c)
 target_link_libraries(sketch-tests PRIVATE imperative_core)
 add_test(NAME sketch-tests COMMAND sketch-tests)

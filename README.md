@@ -110,21 +110,25 @@ canvas can be written as ASCII or binary PGM.
 
 ## Rendered examples
 
-The line fixture below is decoded from five bytes. It is both a quick visual
-smoke test and a readable representation of the binary format’s output:
+This image is a real SVG export generated from
+[`examples/blocks.sk`](examples/blocks.sk), not a mockup. The seven-by-six
+canvas contains a filled three-by-two block; SVG scales those exact pixels for
+readable repository previewing.
 
-```text
-@····
-@····
-@····
-@@@··
-·····
+<p align="center">
+  <img src="examples/blocks.svg" alt="A six-pixel black block rendered from the binary sketch fixture" width="420" />
+</p>
+
+Regenerate it from the committed binary fixture:
+
+```bash
+./build/sketch-svg examples/blocks.sk examples/blocks.svg --scale 60 7 6
 ```
 
 Run `sketch-inspect` to see the corresponding instruction trace, including the
 opcode byte, accumulated data, cursor/target movement, drawing tool, colour,
-and frame number. Golden ASCII, P2 PGM, and trace outputs live alongside the
-fixture in [`examples/`](examples/).
+and frame number. Golden ASCII, P2 PGM, SVG, and trace outputs live alongside
+the fixture in [`examples/`](examples/).
 
 ## Command reference
 
@@ -133,6 +137,7 @@ binary-tool encode|decode [--hex] [--group] [--explain] TYPE VALUE
 sketch-view INPUT.sk [WIDTH HEIGHT]
 sketch-inspect INPUT.sk
 sketch-pgm INPUT.sk OUTPUT.pgm [--plain] [--invert] [--scale N] [WIDTH HEIGHT]
+sketch-svg INPUT.sk OUTPUT.svg [--invert] [--scale N] [WIDTH HEIGHT]
 ```
 
 `TYPE` is one of `i8`, `u8`, `i16`, `u16`, `i32`, `u32`, `i64`, or `u64`.
