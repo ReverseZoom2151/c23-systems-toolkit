@@ -5,7 +5,7 @@ set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 
-add_library(imperative_core STATIC src/toolkit.c src/binary.c)
+add_library(imperative_core STATIC src/toolkit.c src/binary.c src/list.c)
 target_compile_options(imperative_core PRIVATE -Wall -Wextra -Wpedantic -Werror)
 target_include_directories(imperative_core PUBLIC include)
 
@@ -17,3 +17,7 @@ target_link_libraries(binary-tool PRIVATE imperative_core)
 add_executable(binary-tests test/binary_test.c)
 target_link_libraries(binary-tests PRIVATE imperative_core)
 add_test(NAME binary-tests COMMAND binary-tests)
+
+add_executable(list-tests test/list_test.c)
+target_link_libraries(list-tests PRIVATE imperative_core)
+add_test(NAME list-tests COMMAND list-tests)
