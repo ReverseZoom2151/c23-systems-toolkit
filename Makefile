@@ -12,6 +12,10 @@ test: build
 check: test
 	valgrind --leak-check=full --error-exitcode=1 ./build/list-demo
 	valgrind --leak-check=full --error-exitcode=1 ./build/donut-tests
+	valgrind --leak-check=full --error-exitcode=1 ./build/toolkit-visualize binary build/binary-story.svg build/binary-story.gif
+	valgrind --leak-check=full --error-exitcode=1 ./build/toolkit-visualize list build/list-story.svg build/list-story.gif
+	valgrind --leak-check=full --error-exitcode=1 ./build/toolkit-visualize sketch examples/gallery.sk build/sketch-story.svg build/sketch-story.gif
+	valgrind --leak-check=full --error-exitcode=1 ./build/toolkit-visualize renderer build/renderer-story.svg build/renderer-story.gif
 	valgrind --leak-check=full --error-exitcode=1 ./build/binary-tests
 	valgrind --leak-check=full --error-exitcode=1 ./build/list-tests
 	valgrind --leak-check=full --error-exitcode=1 ./build/generic-list-tests

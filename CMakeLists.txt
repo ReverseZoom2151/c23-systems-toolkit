@@ -45,6 +45,14 @@ add_test(NAME list-demo COMMAND list-demo)
 add_executable(donut-demo app/donut_main.c)
 target_link_libraries(donut-demo PRIVATE imperative_core)
 
+add_executable(toolkit-visualize app/visualize_main.c)
+target_link_libraries(toolkit-visualize PRIVATE imperative_core)
+add_test(NAME visualizer-binary COMMAND toolkit-visualize binary binary-story.svg binary-story.gif)
+add_test(NAME visualizer-list COMMAND toolkit-visualize list list-story.svg list-story.gif)
+add_test(NAME visualizer-sketch COMMAND toolkit-visualize sketch
+         ${CMAKE_SOURCE_DIR}/examples/gallery.sk sketch-story.svg sketch-story.gif)
+add_test(NAME visualizer-renderer COMMAND toolkit-visualize renderer renderer-story.svg renderer-story.gif)
+
 add_executable(donut-tests test/donut_test.c)
 target_link_libraries(donut-tests PRIVATE imperative_core)
 add_test(NAME donut-tests COMMAND donut-tests)
