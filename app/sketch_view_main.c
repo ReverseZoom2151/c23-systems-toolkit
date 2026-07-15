@@ -8,8 +8,7 @@ static int parse_size(const char *text, size_t *value) {
     char *end = NULL;
     errno = 0;
     unsigned long long parsed = strtoull(text, &end, 10);
-    if (errno != 0 || end == text || *end != '\0' || parsed == 0 ||
-        parsed > SIZE_MAX) {
+    if (errno != 0 || end == text || *end != '\0' || parsed == 0 || parsed > SIZE_MAX) {
         return 0;
     }
     *value = (size_t)parsed;

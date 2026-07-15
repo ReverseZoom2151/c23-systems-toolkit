@@ -14,8 +14,8 @@ struct int_list {
     size_t size;
 };
 
-static bool insert_between(int_list *list, int_list_node *previous,
-                           int_list_node *next, int value) {
+static bool insert_between(int_list *list, int_list_node *previous, int_list_node *next,
+                           int value) {
     int_list_node *node = malloc(sizeof(*node));
     if (node == NULL) {
         return false;

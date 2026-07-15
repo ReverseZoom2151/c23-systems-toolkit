@@ -9,8 +9,7 @@ static int parse_size(const char *text, size_t *value) {
     char *end = NULL;
     errno = 0;
     unsigned long long parsed = strtoull(text, &end, 10);
-    if (errno != 0 || end == text || *end != '\0' || parsed == 0 ||
-        parsed > SIZE_MAX) {
+    if (errno != 0 || end == text || *end != '\0' || parsed == 0 || parsed > SIZE_MAX) {
         return 0;
     }
     *value = (size_t)parsed;
@@ -26,9 +25,8 @@ int main(int argc, char *argv[]) {
     int invert = 0;
     sketch_pgm_format format = SKETCH_PGM_BINARY;
     if (argc < 3) {
-        fprintf(stderr,
-                "usage: sketch-pgm INPUT.sk OUTPUT.pgm [--plain] [--invert] "
-                "[--scale N] [WIDTH HEIGHT]\n");
+        fprintf(stderr, "usage: sketch-pgm INPUT.sk OUTPUT.pgm [--plain] [--invert] "
+                        "[--scale N] [WIDTH HEIGHT]\n");
         return EXIT_FAILURE;
     }
     for (int index = 3; index < argc; index++) {
@@ -41,7 +39,8 @@ int main(int argc, char *argv[]) {
                 fprintf(stderr, "--scale requires a positive integer\n");
                 return EXIT_FAILURE;
             }
-        } else if (dimension_count < 2 && parse_size(argv[index], &dimensions[dimension_count])) {
+        } else if (dimension_count < 2 &&
+                   parse_size(argv[index], &dimensions[dimension_count])) {
             dimension_count++;
         } else {
             fprintf(stderr, "unknown option or invalid canvas size: %s\n", argv[index]);

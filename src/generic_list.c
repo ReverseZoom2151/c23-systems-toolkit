@@ -15,8 +15,7 @@ struct generic_list {
     size_t size;
 };
 
-static bool generic_list_insert_between(generic_list *list,
-                                        generic_list_node *previous,
+static bool generic_list_insert_between(generic_list *list, generic_list_node *previous,
                                         generic_list_node *next, void *value) {
     generic_list_node *node = malloc(sizeof(*node));
     if (node == NULL) {
@@ -131,16 +130,15 @@ bool generic_list_insert_before(generic_list *list, void *value) {
     if (list == NULL) {
         return false;
     }
-    return generic_list_insert_between(list, list->cursor->previous,
-                                       list->cursor, value);
+    return generic_list_insert_between(list, list->cursor->previous, list->cursor,
+                                       value);
 }
 
 bool generic_list_insert_after(generic_list *list, void *value) {
     if (list == NULL) {
         return false;
     }
-    return generic_list_insert_between(list, list->cursor,
-                                       list->cursor->next, value);
+    return generic_list_insert_between(list, list->cursor, list->cursor->next, value);
 }
 
 static bool generic_list_remove_current(generic_list *list, bool move_to_next,
