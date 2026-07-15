@@ -1,0 +1,35 @@
+#ifndef IMPERATIVE_TOOLKIT_SKETCH_H
+#define IMPERATIVE_TOOLKIT_SKETCH_H
+
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+
+typedef struct sketch_canvas sketch_canvas;
+
+typedef enum {
+    SKETCH_OK,
+    SKETCH_INVALID_ARGUMENT,
+    SKETCH_ALLOCATION_FAILURE,
+    SKETCH_IO_ERROR,
+    SKETCH_MALFORMED_STREAM,
+    SKETCH_OUT_OF_RANGE
+} sketch_status;
+
+sketch_canvas *sketch_canvas_create(size_t width, size_t height);
+void sketch_canvas_destroy(sketch_canvas *canvas);
+void sketch_canvas_clear(sketch_canvas *canvas, uint8_t value);
+size_t sketch_canvas_width(const sketch_canvas *canvas);
+size_t sketch_canvas_height(const sketch_canvas *canvas);
+uint8_t sketch_canvas_pixel(const sketch_canvas *canvas, size_t x, size_t y);
+
+/* Decode the compact two-bit-opcode sketch format into canvas. */
+sketch_status sketch_decode_bytes(sketch_canvas *canvas, const uint8_t *bytes,
+                                  size_t length);
+sketch_status sketch_decode_file(sketch_canvas *canvas, const char *path);
+
+sketch_status sketch_write_ascii(const sketch_canvas *canvas, FILE *output);
+sketch_status sketch_write_pgm(const sketch_canvas *canvas, const char *path);
+const char *sketch_status_message(sketch_status status);
+
+#endif

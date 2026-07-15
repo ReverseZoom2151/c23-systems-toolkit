@@ -5,7 +5,7 @@ set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 
-add_library(imperative_core STATIC src/toolkit.c src/binary.c src/list.c)
+add_library(imperative_core STATIC src/toolkit.c src/binary.c src/list.c src/sketch.c)
 target_compile_options(imperative_core PRIVATE -Wall -Wextra -Wpedantic -Werror)
 target_include_directories(imperative_core PUBLIC include)
 
@@ -21,3 +21,13 @@ add_test(NAME binary-tests COMMAND binary-tests)
 add_executable(list-tests test/list_test.c)
 target_link_libraries(list-tests PRIVATE imperative_core)
 add_test(NAME list-tests COMMAND list-tests)
+
+add_executable(sketch-view app/sketch_view_main.c)
+target_link_libraries(sketch-view PRIVATE imperative_core)
+
+add_executable(sketch-pgm app/sketch_pgm_main.c)
+target_link_libraries(sketch-pgm PRIVATE imperative_core)
+
+add_executable(sketch-tests test/sketch_test.c)
+target_link_libraries(sketch-tests PRIVATE imperative_core)
+add_test(NAME sketch-tests COMMAND sketch-tests)
