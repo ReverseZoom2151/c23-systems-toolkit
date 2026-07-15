@@ -34,6 +34,10 @@ enable_testing()
 add_executable(binary-tool app/binary_main.c)
 target_link_libraries(binary-tool PRIVATE imperative_core)
 
+add_executable(list-demo app/list_demo_main.c)
+target_link_libraries(list-demo PRIVATE imperative_core)
+add_test(NAME list-demo COMMAND list-demo)
+
 add_executable(binary-tests test/binary_test.c)
 target_link_libraries(binary-tests PRIVATE imperative_core)
 add_test(NAME binary-tests COMMAND binary-tests)

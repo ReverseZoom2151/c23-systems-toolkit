@@ -2,28 +2,31 @@
 
 # C23 Systems Toolkit
 
-### A portable C23 CLI toolkit for exact binary data, cursor-based containers, and compact raster sketches.
+### A portable C23 command-line toolkit for fixed-width data, pointer-safe containers, and compact raster formats.
 
 [![CI](https://github.com/ReverseZoom2151/c23-systems-toolkit/actions/workflows/ci.yml/badge.svg)](https://github.com/ReverseZoom2151/c23-systems-toolkit/actions/workflows/ci.yml)
 
 </div>
 
-`c23-systems-toolkit` is a buildable C23 project with three focused systems
-programming domains. Each has a small public API, a terminal-friendly boundary,
-and executable regression tests. The project treats invalid input, integer
-widths, memory ownership, and file output as explicit parts of its contract.
+This repository is a toolkit, not one monolithic program. It contains three
+independent C components that share the same approach: explicit state, thin
+command-line boundaries, strict validation, and reproducible output.
 
-| Domain | What you can do | Systems idea |
-| --- | --- | --- |
-| **Binary** | Encode, decode, group, inspect, and convert exact 8-, 16-, 32-, and 64-bit values to hexadecimal | Two's-complement representation and range checking |
-| **Lists** | Reuse integer or generic ownership-aware cursor-based circular lists | Sentinel nodes, pointer invariants, and ownership |
-| **Sketches** | Inspect compact byte streams, render terminal previews, or export scaled/inverted P2/P5 PGM files | Bit-packed commands, rasterisation, clipping, and file I/O |
+<p align="center">
+  <img src="examples/toolkit-map.svg" alt="Component map showing binary, list, and sketch tools with their inputs and outputs" width="900" />
+</p>
+
+| Component | Input | What it demonstrates | Output |
+| --- | --- | --- | --- |
+| **Binary** | Decimal, binary, or hexadecimal values | Fixed widths, range validation, and two's-complement interpretation | Bits, grouped bits, hex, or an explanation |
+| **Lists** | Insert, traverse, replace, erase, and release operations | Circular links, sentinel boundaries, cursor movement, and pointer ownership | A reusable C library and a runnable trace |
+| **Sketches** | Compact `.sk` byte streams | Opcode decoding, rasterisation, clipping, grayscale pixels, and file output | Trace text, ASCII, P2/P5 PGM, SVG, and animated GIF |
 
 ## Run it
 
 You need a C23-capable compiler, [CMake](https://cmake.org/) 3.20+, and
-optionally [Ninja](https://ninja-build.org/). [Valgrind](https://valgrind.org/)
-is used by the complete local verification target.
+optionally [Ninja](https://ninja-build.org/). The full local quality target
+also uses [Valgrind](https://valgrind.org/) and `clang-format`.
 
 ```bash
 git clone https://github.com/ReverseZoom2151/c23-systems-toolkit.git
@@ -33,119 +36,115 @@ cmake --build build
 ctest --test-dir build --output-on-failure
 ```
 
-Convert a signed value to its exact two's-complement form, then decode it:
+## 1. Exact binary representations
+
+`binary-tool` never guesses a platform integer width. You name the type, and
+it either represents the value exactly or reports an error. Signed values use
+two's complement.
 
 ```bash
-./build/binary-tool encode i8 -12
-# 11110100
-
-./build/binary-tool decode i8 11110100
-# -12
-
 ./build/binary-tool encode --explain i8 -12
-# type: i8
-# binary: 1111_0100
-# hexadecimal: 0xF4
-# two's-complement interpretation: -12
 ```
 
-Use the sketch tools on a compact `.sk` stream. Fixtures are included under
-[`examples/`](examples/), so these commands work directly after building:
+```text
+type: i8
+width: 8 bits
+signed: yes
+binary: 1111_0100
+hexadecimal: 0xF4
+unsigned interpretation: 244
+two's-complement interpretation: -12
+```
+
+This is the same eight stored bits viewed in three useful ways:
+
+```text
+decimal input        -12
+stored bits       1 111 0100
+grouped bits       1111_0100
+hexadecimal              F4
+```
+
+The tool supports `i8`, `u8`, `i16`, `u16`, `i32`, `u32`, `i64`, and `u64`.
+Use `--hex` to encode/decode hexadecimal, `--group` for four-bit grouping, and
+`--explain` to print the interpretations shown above.
+
+## 2. Circular lists with an observable cursor
+
+There are two list libraries:
+
+- `int_list` is the focused integer list used by `list-demo`.
+- `generic_list` stores `void *` values and accepts an optional destructor, so
+  ownership is explicit when values are replaced, erased, released, or the
+  list is destroyed.
+
+Both are circular doubly linked lists with a sentinel. The cursor is either on
+an item or at the sentinel/end state; operations return `false` at invalid
+boundaries rather than dereferencing an invalid pointer.
 
 ```bash
-./build/sketch-view examples/line.sk 5 5
-./build/sketch-inspect examples/line.sk
-./build/sketch-pgm examples/line.sk line.pgm --plain --invert --scale 2 5 5
+./build/list-demo
 ```
 
-The generated PGM is deliberately simple and portable: it can be inspected by
-image tools, converted elsewhere, or treated as raw grayscale output. The
-plain `P2` form is useful for reviews and diffs; binary `P5` is compact.
-
-## Why these modules belong together
-
-The executables are intentionally thin. Parsing and terminal/file I/O live at
-the edge; reusable code in `src/` exposes explicit values and status results.
-That makes fixed-width behaviour testable, pointer ownership local, and binary
-formats usable without a GUI framework.
-
-For example, the binary API takes an explicit bit width and reports why a
-request could not be represented instead of silently truncating a value:
-
-```c
-binary_status binary_encode_signed(
-    int64_t value, unsigned bits, char *output, size_t output_size);
+```text
+insert after end (20):   [20]    cursor: 20
+insert before (10):      [10] <-> [20]    cursor: 10
+insert before (15):      [10] <-> [15] <-> [20]    cursor: 15
+erase 20, move back:     [10] <-> [15]    cursor: 15
 ```
 
-The list remains opaque to callers. Its cursor is either on an item or at an
-end sentinel, so navigation and mutation have observable, safe boundary
-states:
+The same final state can be read structurally as:
 
-```c
-int_list *items = int_list_create();
-int_list_insert_after(items, 20);
-int_list_insert_before(items, 10);
-
-int_list_first(items);       // cursor → 10
-int_list_next(items);        // cursor → 20
-int_list_destroy(items);
+```text
+[end] <-> [10] <-> [15] <-> [end]
+                     ^
+                   cursor
 ```
 
-For callers with their own data types, `generic_list` has the same cursor model
-but stores `void *` values. A destructor supplied at creation owns remaining
-values, while `generic_list_release_current` explicitly transfers ownership
-back to the caller.
+The public APIs are in [`include/list.h`](include/list.h) and
+[`include/generic_list.h`](include/generic_list.h).
 
-The sketch decoder has the same compact boundary: each input byte is a two-bit
-opcode plus a six-bit operand. `DATA` accumulates parameters; movement and
-tool commands consume them to produce clipped line or block raster operations.
+## 3. Compact sketches: bytes to real visual output
 
-```c
-sketch_status sketch_decode_bytes(
-    sketch_canvas *canvas, const uint8_t *bytes, size_t length);
+A `.sk` file is a compact drawing program: every byte has a two-bit opcode and
+a six-bit operand. The decoder tracks a cursor, target position, tool, colour,
+and accumulated data; it can then inspect, rasterise, or export the same
+stream without a GUI framework.
+
+```bash
+./build/sketch-inspect examples/gallery.sk
+./build/sketch-view examples/gallery.sk 32 20
+./build/sketch-svg examples/gallery.sk examples/gallery.svg --scale 20 32 20
+./build/sketch-gif examples/gallery.gif examples/gallery-frame-1.sk \
+  examples/gallery-frame-2.sk examples/gallery.sk --delay 45 32 20
 ```
 
-This keeps the format decoder independent from the output choice: the same
-canvas can be written as ASCII or binary PGM.
-
-## Rendered examples
-
-This image is a real SVG export generated from
-[`examples/gallery.sk`](examples/gallery.sk), not a mockup. It combines a
-grayscale panel, a block-built **C**, and a rasterised chevron; SVG scales those
-exact pixels for readable repository previewing.
+The static image below is generated from `gallery.sk`. It is not branding or a
+mockup: it is a 32 × 20 grayscale canvas containing blocks and rasterised
+lines, scaled by the SVG exporter.
 
 <p align="center">
-  <img src="examples/gallery.svg" alt="A grayscale C23 Systems Toolkit gallery image rendered from a binary sketch fixture" width="640" />
+  <img src="examples/gallery.svg" alt="Grayscale gallery rendered from a compact binary sketch stream" width="640" />
 </p>
 
-Regenerate it from the committed binary fixture:
-
-```bash
-./build/sketch-svg examples/gallery.sk examples/gallery.svg --scale 20 32 20
-```
-
-The same decoder also writes a looping GIF from complete sketch frames. This
-animation builds the gallery panel, the block-based **C**, then the chevron:
+The animation uses three complete binary sketch frames. It first draws the
+panel, then the block-based **C**, then the chevron; `sketch-gif` writes the
+looping GIF directly, with no external graphics package.
 
 <p align="center">
   <img src="examples/gallery.gif" alt="Animated gallery assembled from three decoded binary sketch frames" width="640" />
 </p>
 
-```bash
-./build/sketch-gif examples/gallery.gif examples/gallery-frame-1.sk \
-  examples/gallery-frame-2.sk examples/gallery.sk --delay 45 32 20
-```
-
-Run `sketch-inspect` to see the corresponding instruction trace, including the
-opcode byte, accumulated data, cursor/target movement, drawing tool, colour,
-and frame number. Golden ASCII, P2 PGM, SVG, and trace outputs live alongside
-the fixture in [`examples/`](examples/).
+The committed [`examples/`](examples/) directory contains the source streams,
+SVG, P2 PGM, ASCII output, instruction trace, GIF, and the C fixture generator
+used to reproduce them. The full format is documented in
+[`docs/SKETCH_FORMAT.md`](docs/SKETCH_FORMAT.md).
 
 ## Command reference
 
 ```text
 binary-tool encode|decode [--hex] [--group] [--explain] TYPE VALUE
+list-demo
 sketch-view INPUT.sk [WIDTH HEIGHT]
 sketch-inspect INPUT.sk
 sketch-pgm INPUT.sk OUTPUT.pgm [--plain] [--invert] [--scale N] [WIDTH HEIGHT]
@@ -153,64 +152,48 @@ sketch-svg INPUT.sk OUTPUT.svg [--invert] [--scale N] [WIDTH HEIGHT]
 sketch-gif OUTPUT.gif INPUT.sk... [--delay CENTISECONDS] [--invert] [WIDTH HEIGHT]
 ```
 
-`TYPE` is one of `i8`, `u8`, `i16`, `u16`, `i32`, `u32`, `i64`, or `u64`.
-Signed decoding uses two's complement; unsigned decoding rejects negative or
-out-of-range values. `--hex` accepts a `0x` prefix when decoding, `--group`
-formats binary as four-bit groups, and `--explain` reports the encoded value’s
-interpretations. Sketch output defaults to an 80 × 40 canvas when no size is
-supplied. The complete, implementation-backed stream specification is in
-[`docs/SKETCH_FORMAT.md`](docs/SKETCH_FORMAT.md).
+`sketch-pgm --plain` writes inspectable P2 text; without it, P5 is compact
+binary output. `sketch-svg` is useful for README-friendly pixel previews.
+`sketch-gif` accepts same-sized full sketch streams as frames and loops them.
 
 ## Project layout
 
 ```text
-app/                    Command-line boundaries
-include/                Public headers: binary, list, sketch, toolkit
+app/                    Thin command-line boundaries
+include/                Public binary, list, generic-list, sketch, and toolkit APIs
 src/                    Reusable C23 implementations
-test/                   Executable regression tests
-examples/               Binary sketch fixtures and golden visual outputs
-docs/                   Architecture and sketch-stream format notes
-resources/original/     Preserved source material
-.github/workflows/      Continuous-integration quality gate
+test/                   Executable regression and deterministic robustness tests
+examples/               Reproducible sketch streams, images, traces, and generator
+docs/                   Architecture and byte-stream format documentation
+.github/workflows/      CI: format, build, tests, Valgrind, and sanitizers
 ```
 
 ## Quality bar
 
 ```bash
-make build
-make test
-make check
-make coverage
-make format
-make format-check
+make build        # configure and compile
+make test         # run six executable regression and demonstration tests
+make check        # tests plus Valgrind for every test executable
+make coverage     # build with gcov instrumentation and emit reports
+make format       # apply the repository's clang-format style
+make format-check # verify formatting without changing files
 ```
 
-The build applies `-Wall -Wextra -Wpedantic -Werror` to library consumers and
-targets. The regression suite covers signed and unsigned binary boundaries,
-hexadecimal and grouped conversion, integer and generic-list
-traversal/insertion/erasure/sentinel/ownership states, and sketch line, block,
-malformed-input, trace, P2 output, scaling, inversion, and clipping behaviour.
-
-`robustness-tests` adds deterministic pseudo-random binary round trips,
-malformed-byte checks, and arbitrary sketch-stream decoding under the same
-strict build and sanitizer configuration. `make coverage` emits GCC `gcov`
-reports for the exercised core modules. `make format` and `make format-check`
-use the repository’s `.clang-format` configuration.
-
-`make check` runs every executable test under Valgrind. GitHub Actions repeats
-the strict build and test suite on every push and pull request, runs Valgrind
-against all three test executables, and performs a separate
-AddressSanitizer/UndefinedBehaviorSanitizer build.
+The project compiles with `-Wall -Wextra -Wpedantic -Werror`. GitHub Actions
+runs formatting, all tests, Valgrind, and a separate
+AddressSanitizer/UndefinedBehaviorSanitizer build on every push and pull
+request.
 
 ## Design notes
 
-The toolkit favours small ownership-aware C modules and thin command-line
-boundaries. [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) explains that split;
-[`docs/SKETCH_FORMAT.md`](docs/SKETCH_FORMAT.md) documents the compact rendering
-format.
+The components intentionally remain separate: binary conversion teaches data
+representation; the lists teach pointer ownership and invariants; sketches
+teach bytecode decoding and raster output. The shared design is small reusable
+cores with thin terminal adapters, described in
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 ---
 
-The name **C23 Systems Toolkit** is intentional: it describes a growing group
-of complete, reusable C programs without tying the repository to one data
-structure, format, or historical course.
+The name **C23 Systems Toolkit** describes a growing collection of complete,
+reusable C programs without tying the repository to one data structure, format,
+or historical course.
