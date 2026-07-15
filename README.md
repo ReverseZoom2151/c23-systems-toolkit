@@ -130,8 +130,8 @@ stream without a GUI framework.
 ```
 
 The visualizer decodes real prefixes of `gallery.sk`. The high-resolution
-explainer follows the same drawing checkpoints, so it shows byte-stream
-execution rather than a generic illustration.
+explainer displays those six C-generated decoder frames at presentation scale;
+it does not redraw or invent the sketch.
 
 <p align="center">
   <img src="examples/sketch-explainer.gif" alt="High-resolution animation of compact sketch drawing checkpoints" width="800" />
@@ -162,13 +162,14 @@ is a renderer that can animate, test, and export—not a one-line novelty.
 provides a Q30, no-`libm` comparison renderer with CORDIC or fast-approximate
 trigonometry. `render-diagnostics` exposes depth, normals, ordered dithering,
 and a bounded software ray-march torus. The README animation is a 960 × 540
-Manim rendering of the same torus geometry, used to make the sampling,
-depth-test, and lighting idea legible at presentation scale.
+Manim composition of sixteen real ANSI frames captured from
+`donut-animate --incremental 80 24`; it preserves the renderer’s actual
+luminance characters and motion at presentation scale.
 
-For presentation-quality video rather than a terminal-derived GIF, the
-optional [`animations/`](animations/) companion uses Manim Community to render
-the binary, list, and sketch operation stories as high-resolution MP4 files.
-It is intentionally separate from the portable C build and CI.
+The optional [`animations/`](animations/) companion uses Manim Community to
+compose documented fixtures and C-generated output into high-resolution MP4
+sources and the README GIF previews. It remains separate from the portable C
+build and CI.
 
 <p align="center">
   <img src="examples/renderer-explainer.gif" alt="High-resolution animated torus explaining sampling, depth testing, and lighting" width="800" />

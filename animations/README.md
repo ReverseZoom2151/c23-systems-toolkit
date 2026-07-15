@@ -21,8 +21,12 @@ MANIM="$PWD/.venv/bin/manim" ./animations/render.sh
 
 The script invokes Manim with `-qh` (1080p/60fps), retains MP4 files below
 `media/manim/`, and derives 960 × 540 GIF previews. `media/` is ignored because
-video files are derived output. The binary, list, and sketch scenes use the
-same operation sequences and values as the deterministic visualizer fixtures.
-The renderer scene uses the same torus geometry and makes its sampling, depth,
-and lighting pipeline visible at presentation resolution rather than enlarging
-a terminal raster.
+video files are derived output.
+
+- **Binary** uses the `i8 -12` fixture and exact two's-complement bits from the
+  C binary visualizer.
+- **Lists** uses the exact four-operation sequence printed by `list-demo`.
+- **Sketches** runs `toolkit-visualize sketch examples/gallery.sk` and composes
+  the six resulting C decoder frames without redrawing them.
+- **Renderer** captures `donut-animate --incremental 80 24`, strips only ANSI
+  cursor-control sequences, and composes its real 80 × 24 ASCII frames.

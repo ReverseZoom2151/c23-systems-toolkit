@@ -1,11 +1,27 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Render the README explainers at 1080p/60fps, then make 960px GIF previews
-# that GitHub can display inline. Set MANIM=/path/to/manim for a virtual env.
+# Generate C-derived source frames, render 1080p/60fps explainers, then make
+# 960px GIF previews that GitHub can display inline. Set MANIM and
+# MANIM_PYTHON for a virtual environment.
 
 readonly manim_command="${MANIM:-manim}"
+readonly python_command="${MANIM_PYTHON:-python3}"
 readonly media_directory="media/manim"
+readonly input_directory="media/manim-input"
+
+cmake -S . -B build -G Ninja
+cmake --build build
+mkdir -p "${input_directory}/sketch-frames"
+./build/toolkit-visualize sketch examples/gallery.sk \
+  "${input_directory}/sketch-diagnostic.svg" "${input_directory}/sketch-source.gif"
+ffmpeg -y -i "${input_directory}/sketch-source.gif" \
+  -vsync 0 -vf "scale=768:480:flags=neighbor" \
+  "${input_directory}/sketch-frames/frame-%02d.png"
+./build/donut-animate --incremental --frames 16 --fps 1000 80 24 \
+  > "${input_directory}/donut.ansi"
+"${python_command}" animations/prepare_terminal_frames.py \
+  "${input_directory}/donut.ansi" "${input_directory}/donut-frames.json" 24
 
 "${manim_command}" -qh --media_dir "${media_directory}" \
   animations/toolkit_stories.py BinaryStory ListStory SketchStory RendererStory

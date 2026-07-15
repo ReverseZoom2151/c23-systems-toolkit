@@ -1,51 +1,51 @@
-"""Manim Community scenes for high-resolution toolkit explainers.
+"""High-resolution explainers composed from toolkit fixtures and output.
 
-The values and operation order mirror the deterministic C visualizer fixtures.
-Run with: manim -qh animations/toolkit_stories.py BinaryStory ListStory SketchStory RendererStory
+Run animations/render.sh first. BinaryStory and ListStory express their named
+fixtures; SketchStory and RendererStory display frames emitted by C binaries.
 """
 
-import numpy as np
+import json
+from pathlib import Path
 
 from manim import (  # type: ignore[import-not-found]
     BLUE,
-    BLUE_D,
-    BLUE_E,
-    DEGREES,
-    GREEN,
-    ORANGE,
     DOWN,
+    GREEN,
     LEFT,
+    ORANGE,
     RIGHT,
     UP,
-    WHITE,
     Arrow,
     Create,
     FadeIn,
     FadeOut,
-    Integer,
+    FadeTransform,
+    ImageMobject,
     Rectangle,
     Scene,
-    Surface,
     Text,
-    ThreeDScene,
-    TAU,
     Transform,
     VGroup,
     Write,
 )
 
 
+ASSET_DIRECTORY = Path(__file__).resolve().parent.parent / "media" / "manim-input"
+
+
 class BinaryStory(Scene):
+    """The exact binary fixture used by the C binary visualizer."""
+
     def construct(self):
         title = Text("Exact binary representation", font_size=42).to_edge(UP)
         value = Text("i8  −12", font_size=34).shift(3.8 * LEFT)
         bits = VGroup(
             *[
                 VGroup(
-                    Rectangle(width=0.68, height=0.9, color=ORANGE if i == 0 else BLUE),
+                    Rectangle(width=0.68, height=0.9, color=ORANGE if index == 0 else BLUE),
                     Text(bit, font_size=32),
                 )
-                for i, bit in enumerate("11110100")
+                for index, bit in enumerate("11110100")
             ]
         ).arrange(RIGHT, buff=0.08)
         for cell in bits:
@@ -70,6 +70,8 @@ def node(value: str, cursor: bool = False) -> VGroup:
 
 
 class ListStory(Scene):
+    """The same four mutations executed by list-demo."""
+
     def construct(self):
         title = Text("Cursor-based linked-list operations", font_size=40).to_edge(UP)
         steps = [
@@ -82,57 +84,70 @@ class ListStory(Scene):
         group = VGroup(node("20", True)).move_to([0, 0, 0])
         self.play(Write(title), FadeIn(caption), FadeIn(group))
         for description, values, cursor in steps[1:]:
-            next_nodes = VGroup(*[node(value, index == cursor) for index, value in enumerate(values)])
+            next_nodes = VGroup(
+                *[node(value, index == cursor) for index, value in enumerate(values)]
+            )
             next_nodes.arrange(RIGHT, buff=0.9).move_to([0, 0, 0])
-            arrows = VGroup(*[Arrow(next_nodes[i].get_right(), next_nodes[i + 1].get_left(), buff=0.12)
-                              for i in range(len(next_nodes) - 1)])
+            arrows = VGroup(
+                *[
+                    Arrow(next_nodes[index].get_right(), next_nodes[index + 1].get_left(), buff=0.12)
+                    for index in range(len(next_nodes) - 1)
+                ]
+            )
             next_caption = Text(description, font_size=28).move_to(caption)
             self.play(Transform(group, next_nodes), Transform(caption, next_caption), FadeIn(arrows))
             self.play(FadeOut(arrows), run_time=0.25)
         self.wait(1)
 
 
+def sketch_frame(index: int) -> ImageMobject:
+    path = ASSET_DIRECTORY / "sketch-frames" / f"frame-{index:02d}.png"
+    return ImageMobject(str(path)).scale_to_fit_width(10.7)
+
+
 class SketchStory(Scene):
+    """Real canvas snapshots decoded from prefixes of examples/gallery.sk."""
+
     def construct(self):
-        title = Text("Compact sketch stream: drawing checkpoints", font_size=38).to_edge(UP)
-        byte_label = Text("draw at byte 6", font_size=28).shift(2.6 * DOWN)
-        grid = VGroup(*[Rectangle(width=0.23, height=0.23, color=BLUE, fill_opacity=0)
-                        for _ in range(32 * 12)])
-        grid.arrange_in_grid(rows=12, cols=32, buff=0).scale(0.9)
-        self.play(Write(title), FadeIn(byte_label), Create(grid))
-        selected = [0, 1, 2, 33, 34, 65, 66, 97, 98, 129]
-        for checkpoint, cell_index in enumerate(selected, start=1):
-            grid[cell_index].set_fill(BLUE, opacity=0.95)
-            next_label = Text(f"draw checkpoint {checkpoint}", font_size=28).move_to(byte_label)
-            self.play(Transform(byte_label, next_label), FadeIn(grid[cell_index]), run_time=0.25)
+        paths = sorted((ASSET_DIRECTORY / "sketch-frames").glob("frame-*.png"))
+        if not paths:
+            raise RuntimeError("run animations/render.sh before rendering SketchStory")
+        title = Text("gallery.sk: real decoder checkpoints", font_size=38).to_edge(UP)
+        subtitle = Text("each frame is emitted by toolkit-visualize", font_size=22, color=ORANGE)
+        subtitle.next_to(title, DOWN, buff=0.18)
+        label = Text(f"decoded checkpoint 1 / {len(paths)}", font_size=25).shift(2.95 * DOWN)
+        current = sketch_frame(1)
+        self.play(Write(title), FadeIn(subtitle), FadeIn(label), FadeIn(current))
+        for index in range(2, len(paths) + 1):
+            next_frame = sketch_frame(index)
+            next_label = Text(f"decoded checkpoint {index} / {len(paths)}", font_size=25).move_to(label)
+            self.play(FadeTransform(current, next_frame), Transform(label, next_label), run_time=0.65)
+            current = next_frame
         self.wait(1)
 
 
-class RendererStory(ThreeDScene):
-    def construct(self):
-        title = Text("Torus renderer: sample → depth-test → light", font_size=34).to_edge(UP)
-        subtitle = Text("same geometry, presentation-scale animation", font_size=22, color=ORANGE)
-        subtitle.next_to(title, DOWN, buff=0.2)
-        self.add_fixed_in_frame_mobjects(title, subtitle)
+def terminal_frame(index: int) -> ImageMobject:
+    path = ASSET_DIRECTORY / "terminal-frames" / f"frame-{index:02d}.png"
+    return ImageMobject(str(path)).scale_to_fit_width(12.25)
 
-        major_radius = 2.25
-        minor_radius = 0.82
-        torus = Surface(
-            lambda u, v: np.array(
-                [
-                    (major_radius + minor_radius * np.cos(v)) * np.cos(u),
-                    (major_radius + minor_radius * np.cos(v)) * np.sin(u),
-                    minor_radius * np.sin(v),
-                ]
-            ),
-            u_range=[0, TAU],
-            v_range=[0, TAU],
-            resolution=(48, 24),
-            checkerboard_colors=[BLUE_D, BLUE_E],
-            fill_opacity=0.95,
-        )
-        self.set_camera_orientation(phi=68 * DEGREES, theta=-42 * DEGREES, zoom=0.9)
-        self.play(Create(torus), run_time=2)
-        self.begin_ambient_camera_rotation(rate=0.32)
-        self.wait(4)
-        self.stop_ambient_camera_rotation()
+
+class RendererStory(Scene):
+    """Actual ANSI frames emitted by donut-animate, not a substitute 3D model."""
+
+    def construct(self):
+        frames_path = ASSET_DIRECTORY / "donut-frames.json"
+        frames = json.loads(frames_path.read_text(encoding="utf-8"))
+        if not frames:
+            raise RuntimeError("run animations/render.sh before rendering RendererStory")
+        title = Text("donut-animate: real ANSI terminal frames", font_size=36).to_edge(UP)
+        subtitle = Text("incremental sampling · inverse-depth buffer · luminance ramp", font_size=21, color=ORANGE)
+        subtitle.next_to(title, DOWN, buff=0.18)
+        command = Text("$ donut-animate --incremental 80 24", font="DejaVu Sans Mono", font_size=18, color=BLUE)
+        command.shift(3.05 * DOWN)
+        current = terminal_frame(1)
+        self.play(Write(title), FadeIn(subtitle), FadeIn(command), FadeIn(current))
+        for index in range(2, len(frames) + 1):
+            next_frame = terminal_frame(index)
+            self.play(FadeTransform(current, next_frame), run_time=0.10)
+            current = next_frame
+        self.wait(0.6)
