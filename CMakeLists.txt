@@ -16,6 +16,8 @@ add_library(imperative_core STATIC
     src/generic_list.c
     src/sketch.c
     src/donut.c
+    src/donut_fixed.c
+    src/render_diagnostics.c
 )
 target_compile_options(imperative_core PUBLIC -Wall -Wextra -Wpedantic -Werror)
 target_include_directories(imperative_core PUBLIC include)
@@ -45,6 +47,15 @@ add_test(NAME list-demo COMMAND list-demo)
 add_executable(donut-demo app/donut_main.c)
 target_link_libraries(donut-demo PRIVATE imperative_core)
 
+add_executable(donut-fixed app/donut_fixed_main.c)
+target_link_libraries(donut-fixed PRIVATE imperative_core)
+
+add_executable(donut-animate app/donut_animate_main.c)
+target_link_libraries(donut-animate PRIVATE imperative_core)
+
+add_executable(render-diagnostics app/render_diagnostics_main.c)
+target_link_libraries(render-diagnostics PRIVATE imperative_core)
+
 add_executable(toolkit-visualize app/visualize_main.c)
 target_link_libraries(toolkit-visualize PRIVATE imperative_core)
 add_test(NAME visualizer-binary COMMAND toolkit-visualize binary binary-story.svg binary-story.gif)
@@ -56,6 +67,14 @@ add_test(NAME visualizer-renderer COMMAND toolkit-visualize renderer renderer-st
 add_executable(donut-tests test/donut_test.c)
 target_link_libraries(donut-tests PRIVATE imperative_core)
 add_test(NAME donut-tests COMMAND donut-tests)
+
+add_executable(donut-fixed-tests test/donut_fixed_test.c)
+target_link_libraries(donut-fixed-tests PRIVATE imperative_core)
+add_test(NAME donut-fixed-tests COMMAND donut-fixed-tests)
+
+add_executable(render-diagnostics-tests test/render_diagnostics_test.c)
+target_link_libraries(render-diagnostics-tests PRIVATE imperative_core)
+add_test(NAME render-diagnostics-tests COMMAND render-diagnostics-tests)
 
 add_executable(binary-tests test/binary_test.c)
 target_link_libraries(binary-tests PRIVATE imperative_core)

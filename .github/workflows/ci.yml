@@ -24,6 +24,8 @@ jobs:
         run: |
           valgrind --leak-check=full --error-exitcode=1 ./build/list-demo
           valgrind --leak-check=full --error-exitcode=1 ./build/donut-tests
+          valgrind --leak-check=full --error-exitcode=1 ./build/donut-fixed-tests
+          valgrind --leak-check=full --error-exitcode=1 ./build/render-diagnostics-tests
           valgrind --leak-check=full --error-exitcode=1 ./build/toolkit-visualize binary build/binary-story.svg build/binary-story.gif
           valgrind --leak-check=full --error-exitcode=1 ./build/toolkit-visualize list build/list-story.svg build/list-story.gif
           valgrind --leak-check=full --error-exitcode=1 ./build/toolkit-visualize sketch examples/gallery.sk build/sketch-story.svg build/sketch-story.gif
