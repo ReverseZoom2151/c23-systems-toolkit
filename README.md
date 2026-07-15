@@ -155,13 +155,23 @@ is a renderer that can animate, test, and export—not a one-line novelty.
 
 ```bash
 ./build/donut-demo --incremental 80 24
+./build/donut-animate --incremental --frames 120 --fps 24
+./build/donut-fixed --frames 24 --gif fixed.gif 80 24
+./build/render-diagnostics raymarch raymarch.svg
 ./build/toolkit-visualize renderer examples/renderer-story.svg examples/renderer-story.gif
 ```
 
-The renderer story shows four produced frames alongside the GIF that contains
-the full 24-frame sequence. Its incremental mode uses a normalized rotation
-recurrence for torus samples, preserving the reference renderer’s output model
-without calling `sin` and `cos` for every sampled point.
+The renderer story now uses a 160 × 60 documentation canvas; it is not an
+enlarged 80 × 24 terminal frame. Its GIF contains 24 high-density frames.
+`donut-animate` remains intentionally terminal-sized, while `donut-fixed`
+provides a Q30, no-`libm` comparison renderer with CORDIC or fast-approximate
+trigonometry. `render-diagnostics` exposes depth, normals, ordered dithering,
+and a bounded software ray-march torus.
+
+For presentation-quality video rather than a terminal-derived GIF, the
+optional [`animations/`](animations/) companion uses Manim Community to render
+the binary, list, and sketch operation stories as high-resolution MP4 files.
+It is intentionally separate from the portable C build and CI.
 
 <p align="center">
   <img src="examples/renderer-story.svg" alt="Four depth-tested torus frames produced by the terminal renderer" width="800" />
@@ -169,7 +179,8 @@ without calling `sin` and `cos` for every sampled point.
 </p>
 
 [`docs/RENDERING.md`](docs/RENDERING.md) explains the geometry, depth buffer,
-lighting model, and the deliberately excluded fixed-point/hardware experiments.
+and lighting model; [`docs/ADVANCED_RENDERING.md`](docs/ADVANCED_RENDERING.md)
+documents the fixed-point, diagnostic, and ray-march experiments.
 
 ## Command reference
 
@@ -177,6 +188,9 @@ lighting model, and the deliberately excluded fixed-point/hardware experiments.
 binary-tool encode|decode [--hex] [--group] [--explain] TYPE VALUE
 list-demo
 donut-demo [--incremental] [--frames N] [--gif OUTPUT.gif] [--svg OUTPUT.svg] [WIDTH HEIGHT]
+donut-animate [--incremental] [--frames N] [--fps N] [WIDTH HEIGHT]
+donut-fixed [--fast] [--frames N] [--gif OUTPUT.gif] [--svg OUTPUT.svg] [WIDTH HEIGHT]
+render-diagnostics depth|normals|dither|raymarch OUTPUT.svg [WIDTH HEIGHT]
 toolkit-visualize binary|list SVG_OUTPUT GIF_OUTPUT
 toolkit-visualize sketch INPUT.sk SVG_OUTPUT GIF_OUTPUT
 toolkit-visualize renderer SVG_OUTPUT GIF_OUTPUT
@@ -200,6 +214,7 @@ src/                    Reusable C23 implementations
 test/                   Executable regression and deterministic robustness tests
 examples/               Reproducible sketch streams, images, traces, and generator
 docs/                   Architecture, format, and rendering documentation
+animations/             Optional Manim Community high-resolution explainers
 .github/workflows/      CI: format, build, tests, Valgrind, and sanitizers
 ```
 
@@ -207,7 +222,7 @@ docs/                   Architecture, format, and rendering documentation
 
 ```bash
 make build        # configure and compile
-make test         # run eleven executable regression and visualization tests
+make test         # run thirteen executable regression and visualization tests
 make check        # tests plus Valgrind for every test executable
 make coverage     # build with gcov instrumentation and emit reports
 make format       # apply the repository's clang-format style

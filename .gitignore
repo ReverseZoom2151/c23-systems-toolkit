@@ -4,3 +4,5 @@ resources/
 *.pgm
 *.sk
 *.gcov
+media/
+.venv/

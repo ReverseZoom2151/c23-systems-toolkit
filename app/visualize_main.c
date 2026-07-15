@@ -406,7 +406,7 @@ static int write_renderer_story(const char *svg_path, const char *gif_path) {
                             "frame 16 · A=1.60 B=0.80", "frame 24 · A=2.40 B=1.20"};
     int success = 1;
     for (size_t index = 0; index < 4; index++) {
-        story[index] = sketch_canvas_create(80, 24);
+        story[index] = sketch_canvas_create(160, 60);
         if (story[index] == NULL ||
             donut_render_frame_mode(story[index], (float)index * 0.80F,
                                     (float)index * 0.40F,
@@ -417,7 +417,7 @@ static int write_renderer_story(const char *svg_path, const char *gif_path) {
     }
     sketch_canvas *animation[24] = {0};
     for (size_t index = 0; success && index < 24; index++) {
-        animation[index] = sketch_canvas_create(80, 24);
+        animation[index] = sketch_canvas_create(160, 60);
         if (animation[index] == NULL ||
             donut_render_frame_mode(animation[index], (float)index * 0.10F,
                                     (float)index * 0.05F,
@@ -430,7 +430,7 @@ static int write_renderer_story(const char *svg_path, const char *gif_path) {
                       svg_path, "A renderer produces a sequence of depth-tested frames",
                       "Incremental rotation updates the sampled surface without "
                       "per-sample trig calls",
-                      labels, story, 4, 2, 5) &&
+                      labels, story, 4, 2, 3) &&
                   sketch_write_gif((const sketch_canvas *const *)animation, 24,
                                    gif_path, 5, true) == SKETCH_OK;
     }

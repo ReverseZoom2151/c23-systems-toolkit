@@ -28,15 +28,23 @@ buffering, lighting, and deterministic frame generation. They complement the
 existing bytecode sketch renderer: sketches construct a canvas from compact
 instructions; `donut-demo` constructs one from a 3D surface.
 
-## What is deliberately excluded
+## Advanced modes
 
-This toolkit does not copy the original obfuscation, turn the renderer into an
-unbounded terminal loop, or pretend a hardware implementation is a small C
-feature. The floating-point renderer remains the readable baseline;
-`--incremental` adds normalized sine/cosine recurrence for the sampled torus
-angles. Fixed-point arithmetic, CORDIC, and FPGA/ASIC-style constraints remain
-valuable follow-on experiments only once they can be exposed as independently
-tested modes with comparable output.
+The floating-point renderer remains the readable baseline; `--incremental`
+adds normalized sine/cosine recurrence for the sampled torus angles.
+
+- `donut-fixed` is an independent Q30 renderer. It has a CORDIC backend and a
+  faster parabola-based fixed-point approximation, both with a deterministic
+  depth buffer and no `libm` dependency.
+- `donut-animate` writes a bounded ANSI animation, hides and restores the
+  cursor, and accepts finite frame and FPS controls. It never defaults to an
+  unbounded loop.
+- `render-diagnostics` provides depth, normal-lighting, ordered-dither, and
+  bounded ray-march views. They are deterministic software diagnostics inspired
+  by hardware constraints—not a claim of hardware emulation.
+
+The toolkit still deliberately excludes original-code obfuscation and physical
+VGA/ASIC timing. Those do not strengthen its reusable command-line APIs.
 
 ## Sources of the design
 
