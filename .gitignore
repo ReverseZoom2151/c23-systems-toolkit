@@ -6,3 +6,5 @@ resources/
 *.gcov
 media/
 .venv/
+__pycache__/
+*.pyc
