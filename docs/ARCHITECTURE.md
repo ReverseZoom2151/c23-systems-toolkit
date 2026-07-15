@@ -1,25 +1,37 @@
 # Architecture
 
-The maintained project is a portable C23 command-line toolkit. Reusable logic
-lives in `src/` with public headers in `include/`; `app/` contains thin command
-boundaries and `test/` contains executable regression tests. CMake owns the
-build graph, while the Makefile provides short local workflows.
+C23 Systems Toolkit is a portable command-line project organised around small,
+reusable cores. Public APIs live in `include/`, implementations in `src/`,
+thin executable boundaries in `app/`, and executable regression tests in
+`test/`. CMake owns the build graph; the Makefile provides short local quality
+commands.
 
-The original coursework files live in `resources/original/`. They are retained
-as source material only: several depend on unavailable display headers or do
-not compile under strict C17. Their useful domains are being rebuilt as:
+## Components
 
-- binary conversion with explicit-width integer types;
-- integer and generic ownership-aware circular doubly linked-list libraries;
-- a self-contained sketch decoder with inspection, ASCII, and P2/P5 PGM
-  renderers.
+- **Binary** provides exact fixed-width binary and hexadecimal conversion.
+  `binary-tool` is the terminal boundary for its explicit-range API.
+- **Lists** provide integer and generic ownership-aware circular doubly linked
+  lists. `list-demo` makes cursor movement and mutation observable.
+- **Sketches** decode compact byte streams into a grayscale `sketch_canvas`.
+  The same decoded canvas can be inspected, printed, or exported as PGM, SVG,
+  or GIF.
+- **Renderer** samples and lights a 3D torus into that same grayscale canvas.
+  `donut-demo` uses the shared canvas exporters to produce terminal, SVG, and
+  GIF output without a graphics framework.
 
-Every public module is covered by an executable CTest target. Local `make
-check` and GitHub Actions run those tests under Valgrind; CI also builds and
-tests with AddressSanitizer and UndefinedBehaviorSanitizer enabled.
+The shared canvas is the meaningful connection between the visual components:
+sketches create pixels from a compact instruction stream; the renderer creates
+pixels from sampled geometry. They share output formats, but neither module
+needs to know the other's input format or scene logic.
 
-The command-line layer remains intentionally narrow: `binary-tool` translates
-between decimal, binary, and hexadecimal representations; `sketch-inspect`
-turns opaque bytes into an execution trace; and the sketch renderers choose an
-ASCII or PGM representation of the same canvas. The committed `examples/`
-fixtures make that output visible without introducing a GUI dependency.
+## Quality boundary
+
+Public functions return explicit status values or booleans. Invalid input,
+integer width, ownership transfer, allocation, malformed byte streams, and
+file I/O are all represented as observable outcomes rather than implicit
+behaviour. Every component has an executable CTest target.
+
+Local `make check` and GitHub Actions run tests under Valgrind. CI also checks
+formatting and performs a separate AddressSanitizer/UndefinedBehaviorSanitizer
+build. Committed examples are reproducible command output rather than design
+mockups.
