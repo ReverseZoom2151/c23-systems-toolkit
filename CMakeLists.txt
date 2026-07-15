@@ -5,9 +5,16 @@ set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 
+option(TOOLKIT_ENABLE_SANITIZERS "Enable AddressSanitizer and UBSan" OFF)
+
 add_library(imperative_core STATIC src/toolkit.c src/binary.c src/list.c src/sketch.c)
-target_compile_options(imperative_core PRIVATE -Wall -Wextra -Wpedantic -Werror)
+target_compile_options(imperative_core PUBLIC -Wall -Wextra -Wpedantic -Werror)
 target_include_directories(imperative_core PUBLIC include)
+
+if(TOOLKIT_ENABLE_SANITIZERS AND CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(imperative_core PUBLIC -fsanitize=address,undefined -fno-omit-frame-pointer)
+    target_link_options(imperative_core INTERFACE -fsanitize=address,undefined)
+endif()
 
 enable_testing()
 

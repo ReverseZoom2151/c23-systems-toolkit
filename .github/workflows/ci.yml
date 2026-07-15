@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install verification tools
+        run: sudo apt-get update && sudo apt-get install --yes cmake ninja-build valgrind
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
+      - name: Build
+        run: cmake --build build
+      - name: Run regression tests
+        run: ctest --test-dir build --output-on-failure
+      - name: Check for memory errors
+        run: |
+          valgrind --leak-check=full --error-exitcode=1 ./build/binary-tests
+          valgrind --leak-check=full --error-exitcode=1 ./build/list-tests
+          valgrind --leak-check=full --error-exitcode=1 ./build/sketch-tests
+      - name: Build and test with sanitizers
+        run: |
+          cmake -S . -B build-sanitized -G Ninja -DCMAKE_BUILD_TYPE=Debug -DTOOLKIT_ENABLE_SANITIZERS=ON
+          cmake --build build-sanitized
+          ctest --test-dir build-sanitized --output-on-failure

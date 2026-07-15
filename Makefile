@@ -1,4 +1,4 @@
-.PHONY: configure build test clean
+.PHONY: configure build test check clean
 
 configure:
 	cmake -S . -B build
@@ -9,6 +9,10 @@ build: configure
 test: build
 	ctest --test-dir build --output-on-failure
 
+check: test
+	valgrind --leak-check=full --error-exitcode=1 ./build/binary-tests
+	valgrind --leak-check=full --error-exitcode=1 ./build/list-tests
+	valgrind --leak-check=full --error-exitcode=1 ./build/sketch-tests
+
 clean:
 	cmake -E rm -rf build
-
