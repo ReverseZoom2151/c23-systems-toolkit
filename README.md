@@ -111,18 +111,18 @@ canvas can be written as ASCII or binary PGM.
 ## Rendered examples
 
 This image is a real SVG export generated from
-[`examples/blocks.sk`](examples/blocks.sk), not a mockup. The seven-by-six
-canvas contains a filled three-by-two block; SVG scales those exact pixels for
-readable repository previewing.
+[`examples/gallery.sk`](examples/gallery.sk), not a mockup. It combines a
+grayscale panel, a block-built **C**, and a rasterised chevron; SVG scales those
+exact pixels for readable repository previewing.
 
 <p align="center">
-  <img src="examples/blocks.svg" alt="A six-pixel black block rendered from the binary sketch fixture" width="420" />
+  <img src="examples/gallery.svg" alt="A grayscale C23 Systems Toolkit gallery image rendered from a binary sketch fixture" width="640" />
 </p>
 
 Regenerate it from the committed binary fixture:
 
 ```bash
-./build/sketch-svg examples/blocks.sk examples/blocks.svg --scale 60 7 6
+./build/sketch-svg examples/gallery.sk examples/gallery.svg --scale 20 32 20
 ```
 
 Run `sketch-inspect` to see the corresponding instruction trace, including the
