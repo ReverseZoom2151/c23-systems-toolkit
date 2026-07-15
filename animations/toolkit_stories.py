@@ -1,10 +1,10 @@
 """High-resolution explainers composed from toolkit fixtures and output.
 
 Run animations/render.sh first. BinaryStory and ListStory express their named
-fixtures; SketchStory and RendererStory display frames emitted by C binaries.
+fixtures; SketchStory begins with the actual sketch byte stream and then shows
+the C-generated decoder frames.
 """
 
-import json
 from pathlib import Path
 
 from manim import (  # type: ignore[import-not-found]
@@ -31,6 +31,7 @@ from manim import (  # type: ignore[import-not-found]
 
 
 ASSET_DIRECTORY = Path(__file__).resolve().parent.parent / "media" / "manim-input"
+GALLERY_PATH = Path(__file__).resolve().parent.parent / "examples" / "gallery.sk"
 
 
 class BinaryStory(Scene):
@@ -112,42 +113,20 @@ class SketchStory(Scene):
         paths = sorted((ASSET_DIRECTORY / "sketch-frames").glob("frame-*.png"))
         if not paths:
             raise RuntimeError("run animations/render.sh before rendering SketchStory")
-        title = Text("gallery.sk: real decoder checkpoints", font_size=38).to_edge(UP)
-        subtitle = Text("each frame is emitted by toolkit-visualize", font_size=22, color=ORANGE)
-        subtitle.next_to(title, DOWN, buff=0.18)
-        label = Text(f"decoded checkpoint 1 / {len(paths)}", font_size=25).shift(2.95 * DOWN)
+        bytes_text = GALLERY_PATH.read_bytes().hex(" ")
+        byte_rows = "\n".join(
+            bytes_text[index : index + 47] for index in range(0, len(bytes_text), 48)
+        )
+        source = VGroup(
+            Text("gallery.sk", font="DejaVu Sans Mono", font_size=38, color=ORANGE),
+            Text(byte_rows, font="DejaVu Sans Mono", font_size=19, color=BLUE),
+        ).arrange(DOWN, aligned_edge=LEFT, buff=0.45)
         current = sketch_frame(1)
-        self.play(Write(title), FadeIn(subtitle), FadeIn(label), FadeIn(current))
+        self.play(Write(source))
+        self.wait(0.6)
+        self.play(FadeOut(source), FadeIn(current))
         for index in range(2, len(paths) + 1):
             next_frame = sketch_frame(index)
-            next_label = Text(f"decoded checkpoint {index} / {len(paths)}", font_size=25).move_to(label)
-            self.play(FadeTransform(current, next_frame), Transform(label, next_label), run_time=0.65)
+            self.play(FadeTransform(current, next_frame), run_time=0.65)
             current = next_frame
         self.wait(1)
-
-
-def terminal_frame(index: int) -> ImageMobject:
-    path = ASSET_DIRECTORY / "terminal-frames" / f"frame-{index:02d}.png"
-    return ImageMobject(str(path)).scale_to_fit_width(12.25)
-
-
-class RendererStory(Scene):
-    """Actual ANSI frames emitted by donut-animate, not a substitute 3D model."""
-
-    def construct(self):
-        frames_path = ASSET_DIRECTORY / "donut-frames.json"
-        frames = json.loads(frames_path.read_text(encoding="utf-8"))
-        if not frames:
-            raise RuntimeError("run animations/render.sh before rendering RendererStory")
-        title = Text("donut-animate: real ANSI terminal frames", font_size=36).to_edge(UP)
-        subtitle = Text("incremental sampling · inverse-depth buffer · luminance ramp", font_size=21, color=ORANGE)
-        subtitle.next_to(title, DOWN, buff=0.18)
-        command = Text("$ donut-animate --incremental 80 24", font="DejaVu Sans Mono", font_size=18, color=BLUE)
-        command.shift(3.05 * DOWN)
-        current = terminal_frame(1)
-        self.play(Write(title), FadeIn(subtitle), FadeIn(command), FadeIn(current))
-        for index in range(2, len(frames) + 1):
-            next_frame = terminal_frame(index)
-            self.play(FadeTransform(current, next_frame), run_time=0.10)
-            current = next_frame
-        self.wait(0.6)

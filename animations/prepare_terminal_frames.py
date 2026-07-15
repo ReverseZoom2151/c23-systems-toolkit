@@ -17,9 +17,9 @@ def write_terminal_images(frames: list[str], directory: Path) -> None:
     except OSError:
         font = ImageFont.load_default()
     for index, frame in enumerate(frames, start=1):
-        image = Image.new("RGB", (1920, 820), "#0f172a")
+        image = Image.new("RGB", (1920, 1080), "#0f172a")
         drawing = ImageDraw.Draw(image)
-        drawing.multiline_text((70, 56), frame, font=font, fill="#86efac", spacing=5)
+        drawing.multiline_text((175, 120), frame, font=font, fill="#86efac", spacing=5)
         image.save(directory / f"frame-{index:02d}.png")
 
 

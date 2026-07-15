@@ -22,16 +22,23 @@ ffmpeg -y -i "${input_directory}/sketch-source.gif" \
   > "${input_directory}/donut.ansi"
 "${python_command}" animations/prepare_terminal_frames.py \
   "${input_directory}/donut.ansi" "${input_directory}/donut-frames.json" 24
+donut_palette="${input_directory}/donut-palette.png"
+ffmpeg -y -framerate 10 -i "${input_directory}/terminal-frames/frame-%02d.png" \
+  -vf "fps=10,scale=960:-2:flags=lanczos,palettegen=max_colors=128:stats_mode=diff" \
+  "${donut_palette}"
+ffmpeg -y -framerate 10 -i "${input_directory}/terminal-frames/frame-%02d.png" \
+  -i "${donut_palette}" \
+  -lavfi "fps=10,scale=960:-2:flags=lanczos[x];[x][1:v]paletteuse=dither=sierra2_4a" \
+  "examples/renderer-explainer.gif"
 
 "${manim_command}" -qh --media_dir "${media_directory}" \
-  animations/toolkit_stories.py BinaryStory ListStory SketchStory RendererStory
+  animations/toolkit_stories.py BinaryStory ListStory SketchStory
 
-for story in BinaryStory ListStory SketchStory RendererStory; do
+for story in BinaryStory ListStory SketchStory; do
   case "${story}" in
     BinaryStory) output="examples/binary-explainer.gif" ;;
     ListStory) output="examples/list-explainer.gif" ;;
     SketchStory) output="examples/sketch-explainer.gif" ;;
-    RendererStory) output="examples/renderer-explainer.gif" ;;
   esac
 
   movie="${media_directory}/videos/toolkit_stories/1080p60/${story}.mp4"

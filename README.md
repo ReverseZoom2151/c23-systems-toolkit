@@ -161,15 +161,15 @@ is a renderer that can animate, test, and export—not a one-line novelty.
 `donut-animate` remains intentionally terminal-sized, while `donut-fixed`
 provides a Q30, no-`libm` comparison renderer with CORDIC or fast-approximate
 trigonometry. `render-diagnostics` exposes depth, normals, ordered dithering,
-and a bounded software ray-march torus. The README animation is a 960 × 540
-Manim composition of sixteen real ANSI frames captured from
-`donut-animate --incremental 80 24`; it preserves the renderer’s actual
-luminance characters and motion at presentation scale.
+and a bounded software ray-march torus. The README animation is a standalone
+960 × 540 GIF assembled directly from sixteen real ANSI frames captured from
+`donut-animate --incremental 80 24`; it has no explanatory wrapper and
+preserves the renderer’s actual luminance characters and motion.
 
-The optional [`animations/`](animations/) companion uses Manim Community to
-compose documented fixtures and C-generated output into high-resolution MP4
-sources and the README GIF previews. It remains separate from the portable C
-build and CI.
+The optional [`animations/`](animations/) companion uses Manim Community for
+the binary, list, and sketch explainers. The donut preview is generated without
+Manim from the renderer's own terminal output. This tooling remains separate
+from the portable C build and CI.
 
 <p align="center">
   <img src="examples/renderer-explainer.gif" alt="High-resolution animated torus explaining sampling, depth testing, and lighting" width="800" />
