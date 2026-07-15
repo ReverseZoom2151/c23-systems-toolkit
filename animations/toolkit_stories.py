@@ -1,11 +1,16 @@
-"""Optional Manim Community scenes for high-resolution toolkit explainers.
+"""Manim Community scenes for high-resolution toolkit explainers.
 
 The values and operation order mirror the deterministic C visualizer fixtures.
-Run with: manim -qh animations/toolkit_stories.py BinaryStory ListStory SketchStory
+Run with: manim -qh animations/toolkit_stories.py BinaryStory ListStory SketchStory RendererStory
 """
+
+import numpy as np
 
 from manim import (  # type: ignore[import-not-found]
     BLUE,
+    BLUE_D,
+    BLUE_E,
+    DEGREES,
     GREEN,
     ORANGE,
     DOWN,
@@ -20,7 +25,10 @@ from manim import (  # type: ignore[import-not-found]
     Integer,
     Rectangle,
     Scene,
+    Surface,
     Text,
+    ThreeDScene,
+    TAU,
     Transform,
     VGroup,
     Write,
@@ -98,3 +106,33 @@ class SketchStory(Scene):
             next_label = Text(f"draw checkpoint {checkpoint}", font_size=28).move_to(byte_label)
             self.play(Transform(byte_label, next_label), FadeIn(grid[cell_index]), run_time=0.25)
         self.wait(1)
+
+
+class RendererStory(ThreeDScene):
+    def construct(self):
+        title = Text("Torus renderer: sample → depth-test → light", font_size=34).to_edge(UP)
+        subtitle = Text("same geometry, presentation-scale animation", font_size=22, color=ORANGE)
+        subtitle.next_to(title, DOWN, buff=0.2)
+        self.add_fixed_in_frame_mobjects(title, subtitle)
+
+        major_radius = 2.25
+        minor_radius = 0.82
+        torus = Surface(
+            lambda u, v: np.array(
+                [
+                    (major_radius + minor_radius * np.cos(v)) * np.cos(u),
+                    (major_radius + minor_radius * np.cos(v)) * np.sin(u),
+                    minor_radius * np.sin(v),
+                ]
+            ),
+            u_range=[0, TAU],
+            v_range=[0, TAU],
+            resolution=(48, 24),
+            checkerboard_colors=[BLUE_D, BLUE_E],
+            fill_opacity=0.95,
+        )
+        self.set_camera_orientation(phi=68 * DEGREES, theta=-42 * DEGREES, zoom=0.9)
+        self.play(Create(torus), run_time=2)
+        self.begin_ambient_camera_rotation(rate=0.32)
+        self.wait(4)
+        self.stop_ambient_camera_rotation()

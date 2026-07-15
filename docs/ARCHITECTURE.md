@@ -20,8 +20,9 @@ commands.
   comparison path, finite ANSI playback, and bounded diagnostics all share
   the canvas exporters without needing a graphics framework.
 - **Visual stories** run real binary, list, sketch, and renderer operations,
-  then emit a labelled SVG plus a state-progression GIF. `toolkit-visualize`
-  is the reproducible boundary for the README media.
+  then emit labelled SVG diagnostics plus state-progression GIFs.
+  `toolkit-visualize` is the deterministic C boundary; the README uses the
+  matching high-resolution Manim explainers from `animations/`.
 
 The shared canvas is the meaningful connection between the visual components:
 sketches create pixels from a compact instruction stream; the renderer creates
@@ -37,5 +38,5 @@ behaviour. Every component has an executable CTest target.
 
 Local `make check` and GitHub Actions run tests under Valgrind. CI also checks
 formatting and performs a separate AddressSanitizer/UndefinedBehaviorSanitizer
-build. Committed examples are reproducible command output rather than design
-mockups.
+build. Committed examples and README explainers are reproducible outputs from
+named C or Manim generators, rather than design mockups.

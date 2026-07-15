@@ -1,18 +1,20 @@
 # Visual stories
 
-`toolkit-visualize` produces the README media from actual toolkit operations.
-It writes both an explanatory SVG and a GIF that shows the state sequence.
+`toolkit-visualize` produces deterministic diagnostic media from actual toolkit
+operations. It writes an explanatory SVG and a GIF that shows the state
+sequence; the README uses the corresponding high-resolution Manim explainers
+from [`animations/`](../animations/).
 
 ```bash
-./build/toolkit-visualize binary examples/binary-story.svg examples/binary-story.gif
-./build/toolkit-visualize list examples/list-story.svg examples/list-story.gif
-./build/toolkit-visualize sketch examples/gallery.sk examples/sketch-story.svg examples/sketch-story.gif
-./build/toolkit-visualize renderer examples/renderer-story.svg examples/renderer-story.gif
+./build/toolkit-visualize binary build/binary-story.svg build/binary-story.gif
+./build/toolkit-visualize list build/list-story.svg build/list-story.gif
+./build/toolkit-visualize sketch examples/gallery.sk build/sketch-story.svg build/sketch-story.gif
+./build/toolkit-visualize renderer build/renderer-story.svg build/renderer-story.gif
 ```
 
-- **Binary** uses the library’s signed encoder for `i8 -12`; the GIF reveals
-  the stored bits in order and the SVG identifies the sign bit and hexadecimal
-  result.
+- **Binary** uses the library’s signed encoder for `i8 -12`; the diagnostic
+  GIF reveals the stored bits in order and the SVG identifies the sign bit and
+  hexadecimal result.
 - **Lists** executes the same mutation sequence as `list-demo`; the cursor is
   shown at every resulting state.
 - **Sketches** selects drawing-triggering bytes across the supplied stream and
@@ -22,5 +24,6 @@ It writes both an explanatory SVG and a GIF that shows the state sequence.
   depth-buffered animation.
 
 The visualizer intentionally remains a terminal tool and depends only on the
-toolkit’s canvas and export code. SVG supplies explanatory labels; GIF supplies
-the time dimension.
+toolkit’s canvas and export code. Its SVG output is for vector diagnostics, not
+for README presentation; the Manim companion supplies the polished motion
+explainers.

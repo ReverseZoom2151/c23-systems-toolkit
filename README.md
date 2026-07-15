@@ -66,13 +66,12 @@ The tool supports `i8`, `u8`, `i16`, `u16`, `i32`, `u32`, `i64`, and `u64`.
 Use `--hex` to encode/decode hexadecimal, `--group` for four-bit grouping, and
 `--explain` to print the interpretations shown above.
 
-`toolkit-visualize binary` turns that exact conversion into a generated SVG
-explanation and a small state-progression GIF. The orange cell is the sign bit;
-the remaining cells are the stored magnitude bits.
+The Manim explainer turns that exact conversion into a high-resolution motion
+story. The orange cell is the sign bit; the remaining cells are the stored
+magnitude bits.
 
 <p align="center">
-  <img src="examples/binary-story.svg" alt="Binary conversion from decimal negative twelve through eight stored bits to hexadecimal F4" width="800" />
-  <img src="examples/binary-story.gif" alt="Animation progressively revealing the eight bits for negative twelve" width="800" />
+  <img src="examples/binary-explainer.gif" alt="High-resolution animation of negative twelve becoming eight stored bits and hexadecimal F4" width="800" />
 </p>
 
 ## 2. Circular lists with an observable cursor
@@ -110,12 +109,11 @@ The same final state can be read structurally as:
 The public APIs are in [`include/list.h`](include/list.h) and
 [`include/generic_list.h`](include/generic_list.h).
 
-The list visualizer runs the same operations as `list-demo`; its animation
-keeps the cursor attached to the node that each operation selects.
+The high-resolution explainer runs the same operations as `list-demo`; its
+animation keeps the cursor attached to the node that each operation selects.
 
 <p align="center">
-  <img src="examples/list-story.svg" alt="Four linked-list states showing append, insertion, cursor movement, and erasure" width="800" />
-  <img src="examples/list-story.gif" alt="Animation of linked-list nodes and cursor through four operations" width="800" />
+  <img src="examples/list-explainer.gif" alt="High-resolution animation of linked-list nodes and cursor through four operations" width="800" />
 </p>
 
 ## 3. Compact sketches: bytes to real visual output
@@ -128,21 +126,20 @@ stream without a GUI framework.
 ```bash
 ./build/sketch-inspect examples/gallery.sk
 ./build/toolkit-visualize sketch examples/gallery.sk \
-  examples/sketch-story.svg examples/sketch-story.gif
+  build/sketch-story.svg build/sketch-story.gif
 ```
 
-The visualizer decodes real prefixes of `gallery.sk`. Each SVG panel and GIF
-frame is the canvas after a byte that triggers drawing, so the media exposes
-the byte stream’s execution rather than presenting a generic illustration.
+The visualizer decodes real prefixes of `gallery.sk`. The high-resolution
+explainer follows the same drawing checkpoints, so it shows byte-stream
+execution rather than a generic illustration.
 
 <p align="center">
-  <img src="examples/sketch-story.svg" alt="Six checkpoints from a compact sketch stream as it draws its canvas" width="800" />
-  <img src="examples/sketch-story.gif" alt="Animation of a compact sketch stream drawing its canvas at six decoder checkpoints" width="800" />
+  <img src="examples/sketch-explainer.gif" alt="High-resolution animation of compact sketch drawing checkpoints" width="800" />
 </p>
 
 The committed [`examples/`](examples/) directory contains the source streams,
-SVG, P2 PGM, ASCII output, instruction trace, GIF, and the C fixture generator
-used to reproduce them. The full format is documented in
+P2 PGM, ASCII output, instruction trace, GIF explainers, and the C fixture
+generator used to reproduce them. The full format is documented in
 [`docs/SKETCH_FORMAT.md`](docs/SKETCH_FORMAT.md).
 
 ## 4. A readable 3D terminal renderer
@@ -158,15 +155,15 @@ is a renderer that can animate, test, and export—not a one-line novelty.
 ./build/donut-animate --incremental --frames 120 --fps 24
 ./build/donut-fixed --frames 24 --gif fixed.gif 80 24
 ./build/render-diagnostics raymarch raymarch.svg
-./build/toolkit-visualize renderer examples/renderer-story.svg examples/renderer-story.gif
+./build/toolkit-visualize renderer build/renderer-story.svg build/renderer-story.gif
 ```
 
-The renderer story now uses a 160 × 60 documentation canvas; it is not an
-enlarged 80 × 24 terminal frame. Its GIF contains 24 high-density frames.
 `donut-animate` remains intentionally terminal-sized, while `donut-fixed`
 provides a Q30, no-`libm` comparison renderer with CORDIC or fast-approximate
 trigonometry. `render-diagnostics` exposes depth, normals, ordered dithering,
-and a bounded software ray-march torus.
+and a bounded software ray-march torus. The README animation is a 960 × 540
+Manim rendering of the same torus geometry, used to make the sampling,
+depth-test, and lighting idea legible at presentation scale.
 
 For presentation-quality video rather than a terminal-derived GIF, the
 optional [`animations/`](animations/) companion uses Manim Community to render
@@ -174,8 +171,7 @@ the binary, list, and sketch operation stories as high-resolution MP4 files.
 It is intentionally separate from the portable C build and CI.
 
 <p align="center">
-  <img src="examples/renderer-story.svg" alt="Four depth-tested torus frames produced by the terminal renderer" width="800" />
-  <img src="examples/renderer-story.gif" alt="Incrementally rotated depth-tested torus animation" width="800" />
+  <img src="examples/renderer-explainer.gif" alt="High-resolution animated torus explaining sampling, depth testing, and lighting" width="800" />
 </p>
 
 [`docs/RENDERING.md`](docs/RENDERING.md) explains the geometry, depth buffer,
@@ -202,7 +198,7 @@ sketch-gif OUTPUT.gif INPUT.sk... [--delay CENTISECONDS] [--invert] [WIDTH HEIGH
 ```
 
 `sketch-pgm --plain` writes inspectable P2 text; without it, P5 is compact
-binary output. `sketch-svg` is useful for README-friendly pixel previews.
+binary output. `sketch-svg` is useful for vector diagnostics and reports.
 `sketch-gif` accepts same-sized full sketch streams as frames and loops them.
 
 ## Project layout

@@ -6,5 +6,6 @@ resources/
 *.gcov
 media/
 .venv/
+.manim-venv/
 __pycache__/
 *.pyc
