@@ -32,10 +32,11 @@ instructions; `donut-demo` constructs one from a 3D surface.
 
 This toolkit does not copy the original obfuscation, turn the renderer into an
 unbounded terminal loop, or pretend a hardware implementation is a small C
-feature. The floating-point renderer is the clear baseline. Incremental
-trigonometric rotation, fixed-point arithmetic, CORDIC, and FPGA/ASIC-style
-constraints are valuable follow-on experiments only once they can be exposed
-as independently tested modes with comparable output.
+feature. The floating-point renderer remains the readable baseline;
+`--incremental` adds normalized sine/cosine recurrence for the sampled torus
+angles. Fixed-point arithmetic, CORDIC, and FPGA/ASIC-style constraints remain
+valuable follow-on experiments only once they can be exposed as independently
+tested modes with comparable output.
 
 ## Sources of the design
 

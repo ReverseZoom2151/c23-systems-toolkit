@@ -4,7 +4,18 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-enum { DONUT_SHADE_COUNT = 12 };
+enum { DONUT_SHADE_COUNT = 12, DONUT_THETA_SAMPLES = 90, DONUT_PHI_SAMPLES = 315 };
+
+static void rotate_incrementally(float *cosine, float *sine, float delta_cosine,
+                                 float delta_sine) {
+    float next_cosine = *cosine * delta_cosine - *sine * delta_sine;
+    float next_sine = *sine * delta_cosine + *cosine * delta_sine;
+    /* One Newton step keeps the recurrence close to the unit circle. */
+    float normalization =
+        (3.0F - next_cosine * next_cosine - next_sine * next_sine) / 2.0F;
+    *cosine = next_cosine * normalization;
+    *sine = next_sine * normalization;
+}
 
 static size_t shade_index(float luminance) {
     if (luminance <= 0.0F) {
@@ -14,14 +25,16 @@ static size_t shade_index(float luminance) {
     return shade < DONUT_SHADE_COUNT ? shade : DONUT_SHADE_COUNT - 1;
 }
 
-donut_status donut_render_frame(sketch_canvas *canvas, float angle_a, float angle_b) {
+donut_status donut_render_frame_mode(sketch_canvas *canvas, float angle_a,
+                                     float angle_b, donut_rotation_mode mode) {
     if (canvas == NULL || sketch_canvas_width(canvas) == 0 ||
         sketch_canvas_height(canvas) == 0) {
         return DONUT_INVALID_ARGUMENT;
     }
     size_t width = sketch_canvas_width(canvas);
     size_t height = sketch_canvas_height(canvas);
-    if (width > SIZE_MAX / height) {
+    if (width > SIZE_MAX / height ||
+        (mode != DONUT_TRIGONOMETRIC && mode != DONUT_INCREMENTAL)) {
         return DONUT_INVALID_ARGUMENT;
     }
     float *depth = calloc(width * height, sizeof(*depth));
@@ -40,13 +53,41 @@ donut_status donut_render_frame(sketch_canvas *canvas, float angle_a, float angl
     const float projection =
         (float)width * viewer_distance * 3.0F / (8.0F * (major_radius + minor_radius));
 
-    for (float theta = 0.0F; theta < 6.283185307F; theta += 0.07F) {
-        const float sin_theta = sinf(theta);
-        const float cos_theta = cosf(theta);
+    float theta_sines[DONUT_THETA_SAMPLES];
+    float theta_cosines[DONUT_THETA_SAMPLES];
+    float phi_sines[DONUT_PHI_SAMPLES];
+    float phi_cosines[DONUT_PHI_SAMPLES];
+    float theta_sine = 0.0F;
+    float theta_cosine = 1.0F;
+    float phi_sine = 0.0F;
+    float phi_cosine = 1.0F;
+    const float theta_delta_sine = sinf(0.07F);
+    const float theta_delta_cosine = cosf(0.07F);
+    const float phi_delta_sine = sinf(0.02F);
+    const float phi_delta_cosine = cosf(0.02F);
+    for (size_t index = 0; index < DONUT_THETA_SAMPLES; index++) {
+        theta_sines[index] =
+            mode == DONUT_INCREMENTAL ? theta_sine : sinf((float)index * 0.07F);
+        theta_cosines[index] =
+            mode == DONUT_INCREMENTAL ? theta_cosine : cosf((float)index * 0.07F);
+        rotate_incrementally(&theta_cosine, &theta_sine, theta_delta_cosine,
+                             theta_delta_sine);
+    }
+    for (size_t index = 0; index < DONUT_PHI_SAMPLES; index++) {
+        phi_sines[index] =
+            mode == DONUT_INCREMENTAL ? phi_sine : sinf((float)index * 0.02F);
+        phi_cosines[index] =
+            mode == DONUT_INCREMENTAL ? phi_cosine : cosf((float)index * 0.02F);
+        rotate_incrementally(&phi_cosine, &phi_sine, phi_delta_cosine, phi_delta_sine);
+    }
+
+    for (size_t theta_index = 0; theta_index < DONUT_THETA_SAMPLES; theta_index++) {
+        const float sin_theta = theta_sines[theta_index];
+        const float cos_theta = theta_cosines[theta_index];
         const float ring_radius = major_radius + minor_radius * cos_theta;
-        for (float phi = 0.0F; phi < 6.283185307F; phi += 0.02F) {
-            const float sin_phi = sinf(phi);
-            const float cos_phi = cosf(phi);
+        for (size_t phi_index = 0; phi_index < DONUT_PHI_SAMPLES; phi_index++) {
+            const float sin_phi = phi_sines[phi_index];
+            const float cos_phi = phi_cosines[phi_index];
             const float inverse_depth = 1.0F / (sin_phi * ring_radius * sin_a +
                                                 sin_theta * cos_a + viewer_distance);
             const float rotated_y = sin_phi * ring_radius * cos_a - sin_theta * sin_a;
@@ -78,6 +119,10 @@ donut_status donut_render_frame(sketch_canvas *canvas, float angle_a, float angl
     }
     free(depth);
     return DONUT_OK;
+}
+
+donut_status donut_render_frame(sketch_canvas *canvas, float angle_a, float angle_b) {
+    return donut_render_frame_mode(canvas, angle_a, angle_b, DONUT_TRIGONOMETRIC);
 }
 
 donut_status donut_write_ascii(const sketch_canvas *canvas, FILE *output) {

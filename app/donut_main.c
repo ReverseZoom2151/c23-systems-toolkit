@@ -17,7 +17,8 @@ static int parse_size(const char *text, size_t *value) {
 }
 
 static void print_usage(FILE *output) {
-    fputs("usage: donut-demo [--frames N] [--gif OUTPUT.gif] [--svg OUTPUT.svg] "
+    fputs("usage: donut-demo [--incremental] [--frames N] [--gif OUTPUT.gif] [--svg "
+          "OUTPUT.svg] "
           "[WIDTH HEIGHT]\n",
           output);
 }
@@ -28,10 +29,13 @@ int main(int argc, char *argv[]) {
     size_t frame_count = 1;
     const char *gif_path = NULL;
     const char *svg_path = NULL;
+    donut_rotation_mode mode = DONUT_TRIGONOMETRIC;
     size_t dimensions[2] = {0};
     size_t dimension_count = 0;
     for (int index = 1; index < argc; index++) {
-        if (strcmp(argv[index], "--frames") == 0) {
+        if (strcmp(argv[index], "--incremental") == 0) {
+            mode = DONUT_INCREMENTAL;
+        } else if (strcmp(argv[index], "--frames") == 0) {
             if (++index == argc || !parse_size(argv[index], &frame_count)) {
                 print_usage(stderr);
                 return EXIT_FAILURE;
@@ -84,8 +88,8 @@ int main(int argc, char *argv[]) {
         if (frames[index] == NULL) {
             status = DONUT_ALLOCATION_FAILURE;
         } else {
-            status = donut_render_frame(frames[index], (float)index * 0.10F,
-                                        (float)index * 0.05F);
+            status = donut_render_frame_mode(frames[index], (float)index * 0.10F,
+                                             (float)index * 0.05F, mode);
         }
     }
     if (status == DONUT_OK && gif_path != NULL) {

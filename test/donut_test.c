@@ -36,6 +36,11 @@ int main(void) {
     }
     assert(changed > 100);
 
+    assert(donut_render_frame_mode(second, 0.0F, 0.0F, DONUT_INCREMENTAL) == DONUT_OK);
+    assert(nonwhite_pixels(second) > 300);
+    assert(donut_render_frame_mode(second, 0.0F, 0.0F, (donut_rotation_mode)99) ==
+           DONUT_INVALID_ARGUMENT);
+
     FILE *ascii = tmpfile();
     assert(ascii != NULL);
     assert(donut_write_ascii(first, ascii) == DONUT_OK);

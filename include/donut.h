@@ -12,6 +12,8 @@ typedef enum {
     DONUT_IO_ERROR
 } donut_status;
 
+typedef enum { DONUT_TRIGONOMETRIC, DONUT_INCREMENTAL } donut_rotation_mode;
+
 /*
  * Rasterise one lit torus frame into a grayscale canvas.
  *
@@ -20,6 +22,9 @@ typedef enum {
  * inverse-depth buffer. Dark pixels represent brighter surface points.
  */
 donut_status donut_render_frame(sketch_canvas *canvas, float angle_a, float angle_b);
+/* Use incremental sine/cosine rotation for surface sampling. */
+donut_status donut_render_frame_mode(sketch_canvas *canvas, float angle_a,
+                                     float angle_b, donut_rotation_mode mode);
 
 /* Write a terminal frame using the luminance ramp ".,-~:;=!*#$@". */
 donut_status donut_write_ascii(const sketch_canvas *canvas, FILE *output);
